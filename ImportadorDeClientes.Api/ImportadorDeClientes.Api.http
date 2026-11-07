@@ -1,0 +1,49 @@
+@host = http://localhost:5261
+
+### Listar todos
+GET {{host}}/clientes
+
+### Obtener uno (404 si no existe; el DNI no distingue mayúsculas)
+GET {{host}}/clientes/12345678z
+
+### Alta (201; 400 si el DNI ya existe o los datos no son válidos)
+POST {{host}}/clientes
+Content-Type: application/json
+
+{
+  "dni": "12345678Z",
+  "nombre": "Ana",
+  "apellidos": "García López",
+  "fechaNacimiento": "1990-04-12",
+  "telefono": "612345678",
+  "email": "ana@example.com"
+}
+
+### Alta inválida (400 con ValidationProblem)
+POST {{host}}/clientes
+Content-Type: application/json
+
+{
+  "dni": "",
+  "nombre": "Sin DNI",
+  "apellidos": "Prueba",
+  "fechaNacimiento": "2999-01-01",
+  "telefono": "123",
+  "email": "no-es-un-email"
+}
+
+### Modificar (extra)
+PUT {{host}}/clientes/12345678Z
+Content-Type: application/json
+
+{
+  "dni": "12345678Z",
+  "nombre": "Ana María",
+  "apellidos": "García López",
+  "fechaNacimiento": "12/04/1990",
+  "telefono": "+34 612 345 678",
+  "email": "ana.maria@example.com"
+}
+
+### Borrar (204; 404 si no existe)
+DELETE {{host}}/clientes/12345678Z
