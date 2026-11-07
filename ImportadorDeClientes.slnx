@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ImportadorDeClientes.Core/ImportadorDeClientes.Core.csproj" />
+  <Project Path="ImportadorDeClientes.Desktop/ImportadorDeClientes.Desktop.csproj" />
+  <Project Path="ImportadorDeClientes.Api/ImportadorDeClientes.Api.csproj" />
+  <Project Path="ImportadorDeClientes.Tests/ImportadorDeClientes.Tests.csproj" />
+</Solution>

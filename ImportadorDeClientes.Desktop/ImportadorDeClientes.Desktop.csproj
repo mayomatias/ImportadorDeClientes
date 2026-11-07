@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net48</TargetFramework>
+		<UseWindowsForms>true</UseWindowsForms>
+		<LangVersion>latest</LangVersion>
+		<RootNamespace>ImportadorDeClientes.Desktop</RootNamespace>
+		<AssemblyName>ImportadorDeClientes.Desktop</AssemblyName>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ImportadorDeClientes.Core\ImportadorDeClientes.Core.csproj" />
+	</ItemGroup>
+
+</Project>
