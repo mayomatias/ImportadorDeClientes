@@ -1,0 +1,10 @@
+dni,nombre,apellidos,fechaNacimiento,telefono,email
+12345678Z,Ana,García López,1990-04-12,612345678,ana@example.com
+87654321X,Email,Incorrecto,1985-03-11,612345678,email-sin-arroba
+11111111H,Fecha,Futura,2999-01-01,612345678,futura@example.com
+,DNI,Vacío,1980-01-01,612345678,vacio@example.com
+12345678Z,DNI,Repetido,1970-05-05,612345678,repetido@example.com
+22222222J,Teléfono,Corto,1991-02-02,61234,tel@example.com
+33333333P,Fecha,Formato raro,02-02-1991,612345678,fecha@example.com
+44444444A,"Comillas, con coma",Válido,15/08/1979,+34 712 345 678,comillas@example.com
+55555555K,Campos,De menos
