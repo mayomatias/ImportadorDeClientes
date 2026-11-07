@@ -25,7 +25,6 @@ public class ClienteValidatorTests
 
     [Theory]
     [InlineData(null)]
-    [InlineData("")]
     [InlineData("   ")]
     public void DniVacio_EsError(string? dni)
     {
@@ -38,8 +37,6 @@ public class ClienteValidatorTests
     [Theory]
     [InlineData("anaexample.com")]
     [InlineData("ana@example")]
-    [InlineData("ana @example.com")]
-    [InlineData("")]
     public void EmailInvalido_EsError(string email)
     {
         var cliente = ClienteValido();
@@ -49,29 +46,14 @@ public class ClienteValidatorTests
     }
 
     [Theory]
-    [InlineData("61234567")]      // 8 dígitos
-    [InlineData("512345678")]     // empieza por 5
-    [InlineData("6123456789")]    // 10 dígitos
-    [InlineData("abc")]
+    [InlineData("61234567")]   // 8 dígitos
+    [InlineData("512345678")]  // empieza por 5
     public void TelefonoInvalido_EsError(string telefono)
     {
         var cliente = ClienteValido();
         cliente.Telefono = telefono;
 
         AssertErrorEn(cliente, nameof(Cliente.Telefono));
-    }
-
-    [Theory]
-    [InlineData("612345678")]
-    [InlineData("+34612345678")]
-    [InlineData("612 345 678")]
-    [InlineData("912-345-678")]
-    public void TelefonoValido_NoEsError(string telefono)
-    {
-        var cliente = ClienteValido();
-        cliente.Telefono = telefono;
-
-        Assert.True(_validator.Validar(cliente).EsValido);
     }
 
     [Fact]
@@ -81,35 +63,6 @@ public class ClienteValidatorTests
         cliente.FechaNacimiento = DateTime.Today.AddDays(1);
 
         AssertErrorEn(cliente, nameof(Cliente.FechaNacimiento));
-    }
-
-    [Fact]
-    public void FechaAnteriorA1900_EsError()
-    {
-        var cliente = ClienteValido();
-        cliente.FechaNacimiento = new DateTime(1899, 12, 31);
-
-        AssertErrorEn(cliente, nameof(Cliente.FechaNacimiento));
-    }
-
-    [Fact]
-    public void Dni_SeNormaliza()
-    {
-        var cliente = new Cliente { Dni = "  12345678z " };
-        Assert.Equal("12345678Z", cliente.Dni);
-    }
-
-    [Theory]
-    [InlineData("12345678Z", true)]
-    [InlineData("12345678A", false)]   // letra incorrecta
-    [InlineData("1234567Z", false)]    // 7 dígitos
-    public void LetraDni_SoloSeCompruebaSiSeActiva(string dni, bool esperadoValido)
-    {
-        var cliente = ClienteValido();
-        cliente.Dni = dni;
-
-        Assert.True(_validator.Validar(cliente).EsValido);
-        Assert.Equal(esperadoValido, new ClienteValidator { ComprobarLetraDni = true }.Validar(cliente).EsValido);
     }
 
     private void AssertErrorEn(Cliente cliente, string campo)

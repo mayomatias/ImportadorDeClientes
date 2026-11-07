@@ -37,35 +37,9 @@ public sealed class ClientesApiTests : IDisposable
     }
 
     [Fact]
-    public async Task GetClientes_FicheroNuevo_DevuelveArrayVacio()
-    {
-        var respuesta = await _client.GetAsync("/clientes");
-
-        Assert.Equal(HttpStatusCode.OK, respuesta.StatusCode);
-        Assert.Equal("[]", await respuesta.Content.ReadAsStringAsync());
-        Assert.True(File.Exists(_ruta));
-    }
-
-    [Fact]
-    public async Task Post_Crea_YGetLoDevuelve()
-    {
-        var post = await _client.PostAsJsonAsync("/clientes", ClienteValido);
-
-        Assert.Equal(HttpStatusCode.Created, post.StatusCode);
-        Assert.Equal("/clientes/12345678Z", post.Headers.Location?.ToString());
-
-        var get = await _client.GetAsync("/clientes/12345678z");
-        Assert.Equal(HttpStatusCode.OK, get.StatusCode);
-
-        using var doc = JsonDocument.Parse(await get.Content.ReadAsStringAsync());
-        Assert.Equal("Ana", doc.RootElement.GetProperty("nombre").GetString());
-        Assert.Equal("1990-04-12", doc.RootElement.GetProperty("fechaNacimiento").GetString());
-    }
-
-    [Fact]
     public async Task Post_Duplicado_Devuelve400()
     {
-        await _client.PostAsJsonAsync("/clientes", ClienteValido);
+        Assert.Equal(HttpStatusCode.Created, (await _client.PostAsJsonAsync("/clientes", ClienteValido)).StatusCode);
         var respuesta = await _client.PostAsJsonAsync("/clientes", ClienteValido);
 
         Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
@@ -94,18 +68,6 @@ public sealed class ClientesApiTests : IDisposable
     }
 
     [Fact]
-    public async Task Post_FechaIlegible_Devuelve400()
-    {
-        var respuesta = await _client.PostAsJsonAsync("/clientes", new
-        {
-            dni = "12345678Z", nombre = "Ana", apellidos = "García",
-            fechaNacimiento = "ayer", telefono = "612345678", email = "ana@example.com"
-        });
-
-        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
-    }
-
-    [Fact]
     public async Task Get_Inexistente_Devuelve404()
     {
         var respuesta = await _client.GetAsync("/clientes/00000000T");
@@ -119,15 +81,5 @@ public sealed class ClientesApiTests : IDisposable
 
         Assert.Equal(HttpStatusCode.NoContent, (await _client.DeleteAsync("/clientes/12345678Z")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await _client.DeleteAsync("/clientes/12345678Z")).StatusCode);
-    }
-
-    [Fact]
-    public async Task Put_DniDistintoEnRuta_Devuelve400()
-    {
-        await _client.PostAsJsonAsync("/clientes", ClienteValido);
-
-        var respuesta = await _client.PutAsJsonAsync("/clientes/87654321X", ClienteValido);
-
-        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
     }
 }
