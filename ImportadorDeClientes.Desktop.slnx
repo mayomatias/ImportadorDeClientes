@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ImportadorDeClientes.Core/ImportadorDeClientes.Core.csproj" />
+  <Project Path="ImportadorDeClientes.Desktop/ImportadorDeClientes.Desktop.csproj" />
+</Solution>
