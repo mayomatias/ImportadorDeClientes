@@ -22,7 +22,23 @@ builder.Services.AddSingleton<IClienteRepository>(sp =>
 });
 builder.Services.AddSingleton<ClienteValidator>();
 
+// Si el cuerpo no se puede leer (JSON mal formado, fecha imposible…) se lanza BadHttpRequestException
+// también fuera de Development, para responder siempre con el mismo ValidationProblem (ver middleware).
+builder.Services.Configure<RouteHandlerOptions>(o => o.ThrowOnBadRequest = true);
+
 var app = builder.Build();
+
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next(context);
+    }
+    catch (BadHttpRequestException ex) when (!context.Response.HasStarted)
+    {
+        await TypedResults.ValidationProblem(ErroresDeCuerpo(ex)).ExecuteAsync(context);
+    }
+});
 
 if (app.Environment.IsDevelopment())
 {
@@ -86,6 +102,22 @@ static Dictionary<string, string[]> AErrores(ResultadoValidacion validacion) =>
     validacion.Errores
         .GroupBy(e => JsonNamingPolicy.CamelCase.ConvertName(e.Campo))
         .ToDictionary(g => g.Key, g => g.Select(e => e.Mensaje).ToArray());
+
+// Traduce un cuerpo ilegible a errores por campo: "$.fechaNacimiento" → "fechaNacimiento";
+// los errores de sintaxis (coma final, comillas…) no son de un campo y van a "cuerpo".
+static Dictionary<string, string[]> ErroresDeCuerpo(BadHttpRequestException ex)
+{
+    if (ex.InnerException is not JsonException json)
+        return new() { ["cuerpo"] = ["Falta el cuerpo de la petición o no es JSON (Content-Type: application/json)."] };
+
+    if (json.InnerException is null && json.Path is { Length: > 2 } path && path.StartsWith("$."))
+        return new() { [path[2..]] = [json.Message] };
+
+    var posicion = json.LineNumber is { } linea
+        ? $" (línea {linea + 1}, posición {json.BytePositionInLine + 1})"
+        : string.Empty;
+    return new() { ["cuerpo"] = [$"El cuerpo no es un JSON válido{posicion}."] };
+}
 
 /// <summary>Escribe las fechas como yyyy-MM-dd y acepta también dd/MM/yyyy al leer, igual que la importación.</summary>
 internal sealed class FechaJsonConverter : JsonConverter<DateTime>

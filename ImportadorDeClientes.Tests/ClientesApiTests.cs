@@ -68,6 +68,21 @@ public sealed class ClientesApiTests : IDisposable
     }
 
     [Fact]
+    public async Task Post_FechaImposible_Devuelve400ConErrorEnLaFecha()
+    {
+        const string cuerpo = """
+            { "dni": "12345678Z", "nombre": "Ana", "apellidos": "García", "fechaNacimiento": "1997-30-03",
+              "telefono": "612345678", "email": "ana@example.com" }
+            """;
+        var respuesta = await _client.PostAsync("/clientes",
+            new StringContent(cuerpo, System.Text.Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, respuesta.StatusCode);
+        using var doc = JsonDocument.Parse(await respuesta.Content.ReadAsStringAsync());
+        Assert.True(doc.RootElement.GetProperty("errors").TryGetProperty("fechaNacimiento", out _));
+    }
+
+    [Fact]
     public async Task Get_Inexistente_Devuelve404()
     {
         var respuesta = await _client.GetAsync("/clientes/00000000T");
