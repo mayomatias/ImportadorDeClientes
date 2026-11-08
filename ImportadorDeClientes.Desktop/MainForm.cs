@@ -497,7 +497,13 @@ public partial class MainForm : Form
     private void ReemplazarLista(IEnumerable<Cliente> clientes)
     {
         var lista = clientes.Where(c => !EsVacio(c)).ToList();
+
+        // La rejilla se desconecta mientras se cambia la lista y se vuelve a conectar al final. Así reconstruye
+        // todas sus filas desde la lista y no arrastra ningún estado a medias (una fila nueva pendiente, un aviso
+        // de cambio que no le llegó…), que la dejaba mostrando filas antiguas y fallando al hacer clic.
+        grid.CancelEdit();
         _cargando = true;
+        grid.DataSource = null;
         try
         {
             _clientes.RaiseListChangedEvents = false;
@@ -507,9 +513,8 @@ public partial class MainForm : Form
         finally
         {
             _clientes.RaiseListChangedEvents = true;
-            // El aviso se lanza desde el BindingSource: si se lanza desde la lista, el BindingSource
-            // puede no propagarlo a la rejilla y esta se queda con las filas antiguas.
             bindingSource.ResetBindings(false);
+            grid.DataSource = bindingSource;
             _cargando = false;
         }
 
