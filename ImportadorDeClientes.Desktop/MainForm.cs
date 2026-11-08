@@ -337,6 +337,11 @@ public partial class MainForm : Form
                 MessageBoxDefaultButton.Button2) != DialogResult.Yes)
             return;
 
+        EliminarClientes(clientes);
+    }
+
+    private void EliminarClientes(List<Cliente> clientes)
+    {
         // Se descarta la edición en curso y se sale de la fila desde la rejilla (no desde el BindingSource),
         // para que la rejilla no se desincronice de la lista.
         grid.CancelEdit();
@@ -350,7 +355,11 @@ public partial class MainForm : Form
         }
         if (grid.CurrentCell != null) return;
 
-        foreach (var cliente in clientes) _clientes.Remove(cliente);
+        // Se borran todos de una vez y la rejilla se recarga una sola vez. Borrando uno a uno, la rejilla
+        // repinta entre borrado y borrado y puede pedir filas que ya no existen en la lista.
+        var aEliminar = new HashSet<Cliente>(clientes);
+        ReemplazarLista(_clientes.Where(c => !aEliminar.Contains(c)).ToList());
+        MarcarModificado();
 
         EstablecerEstado(clientes.Count == 1 ? "Cliente eliminado." : $"{clientes.Count} clientes eliminados.");
     }
@@ -367,7 +376,7 @@ public partial class MainForm : Form
     /// <summary>Marca con icono de error cada celda cuyo campo no supera la validación de Core.</summary>
     private void grid_CellErrorTextNeeded(object sender, DataGridViewCellErrorTextNeededEventArgs e)
     {
-        if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+        if (_cargando || e.RowIndex < 0 || e.ColumnIndex < 0 || e.RowIndex >= bindingSource.Count) return;
 
         var fila = grid.Rows[e.RowIndex];
         if (fila.IsNewRow || !(fila.DataBoundItem is Cliente cliente)) return;
@@ -387,6 +396,8 @@ public partial class MainForm : Form
     /// <summary>No se puede salir de una fila con el DNI vacío o repetido: es la clave del cliente.</summary>
     private void grid_RowValidating(object sender, DataGridViewCellCancelEventArgs e)
     {
+        if (_cargando || e.RowIndex < 0 || e.RowIndex >= bindingSource.Count) return;
+
         var fila = grid.Rows[e.RowIndex];
         if (fila.IsNewRow || !(fila.DataBoundItem is Cliente cliente)) return;
         if (EsVacio(cliente)) return; // fila nueva sin datos: se descarta, no hay nada que validar
