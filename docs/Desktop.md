@@ -58,7 +58,14 @@ Qué pasa con los errores:
 - **Errores visibles:**
   - cada celda con un dato no válido muestra un **icono rojo**, y al pasar el ratón por encima aparece el motivo;
   - la barra de estado cuenta cuántos clientes tienen errores.
-- **El DNI es la clave.** No puedes salir de una fila con el DNI vacío o repetido. Escríbelo, o pulsa `Esc` para descartar una fila nueva. Un DNI o NIE con la letra incorrecta sí deja salir de la fila, pero queda marcado con el icono de error, igual que el resto de datos no válidos.
+- **El DNI es la clave.** No puedes pasar a otra fila con el DNI vacío o repetido. Tienes tres salidas:
+  - escribir un DNI válido;
+  - pulsar `Esc` si es una fila nueva;
+  - **eliminar la fila** con Eliminar o `Supr`, que funciona aunque la fila esté bloqueada.
+
+  Si intentas cerrar con una fila así, la app pregunta si quieres eliminarla y salir.
+
+  Un DNI o NIE con la letra incorrecta sí deja salir de la fila, pero queda marcado con el icono de error, igual que el resto de datos no válidos.
 
 ### Guardar y cargar
 

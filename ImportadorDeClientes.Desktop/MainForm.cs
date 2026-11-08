@@ -32,6 +32,7 @@ public partial class MainForm : Form
     private HashSet<string> _dnisDuplicados = new(StringComparer.OrdinalIgnoreCase);
     private bool _modificado;
     private bool _cargando;
+    private bool _eliminando;
 
     public MainForm()
     {
@@ -132,12 +133,19 @@ public partial class MainForm : Form
         }
 
         // WinForms pone Cancel a true si la validación de la fila actual ha fallado (DNI vacío o repetido).
+        // En ese caso se ofrece eliminar la fila para poder salir.
         if (e.Cancel)
         {
-            MessageBox.Show(this, "La fila marcada tiene un DNI vacío o repetido. Corrígelo, o pulsa Esc " +
-                                  "si es una fila nueva que quieres descartar, antes de salir.",
-                TituloBase, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
+            var respuesta = MessageBox.Show(this,
+                "La fila seleccionada tiene el DNI vacío o repetido.\n\n¿Eliminarla y salir?\n\n" +
+                "Sí: se elimina esa fila.\nNo: vuelves para corregirla (Esc descarta una fila nueva).",
+                TituloBase, MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2);
+
+            if (respuesta != DialogResult.Yes || !(grid.CurrentRow?.DataBoundItem is Cliente bloqueado) ||
+                !EliminarClientes(new List<Cliente> { bloqueado }))
+                return; // e.Cancel sigue a true: no se cierra
+
+            e.Cancel = false;
         }
 
         if (!ConfirmarEdicionPendiente())
@@ -330,7 +338,8 @@ public partial class MainForm : Form
         if (clientes.Count == 0) return;
 
         var pregunta = clientes.Count == 1
-            ? $"¿Eliminar el cliente {clientes[0].Dni} {clientes[0].Nombre} {clientes[0].Apellidos}?"
+            ? $"¿Eliminar el cliente {(string.IsNullOrWhiteSpace(clientes[0].Dni) ? "(sin DNI)" : clientes[0].Dni)} " +
+              $"{clientes[0].Nombre} {clientes[0].Apellidos}?"
             : $"¿Eliminar los {clientes.Count} clientes seleccionados?";
 
         if (MessageBox.Show(this, pregunta, TituloBase, MessageBoxButtons.YesNo, MessageBoxIcon.Question,
@@ -340,20 +349,32 @@ public partial class MainForm : Form
         EliminarClientes(clientes);
     }
 
-    private void EliminarClientes(List<Cliente> clientes)
+    /// <summary>Elimina los clientes indicados. False si no se ha podido salir de la fila actual.</summary>
+    private bool EliminarClientes(List<Cliente> clientes)
     {
         // Se descarta la edición en curso y se sale de la fila desde la rejilla (no desde el BindingSource),
-        // para que la rejilla no se desincronice de la lista.
+        // para que la rejilla no se desincronice de la lista. _eliminando desactiva la regla de RowValidating:
+        // una fila con el DNI vacío o repetido no deja ir a otra fila, pero sí se puede eliminar.
         grid.CancelEdit();
+        _eliminando = true;
         try
         {
             grid.CurrentCell = null;
         }
         catch (InvalidOperationException)
         {
-            return; // la fila actual no supera la validación: su ErrorText explica el motivo
+            // se comprueba abajo
         }
-        if (grid.CurrentCell != null) return;
+        finally
+        {
+            _eliminando = false;
+        }
+
+        if (grid.CurrentCell != null)
+        {
+            EstablecerEstado("No se ha podido eliminar: termina o cancela (Esc) la edición de la fila actual.");
+            return false;
+        }
 
         // Se borran todos de una vez y la rejilla se recarga una sola vez. Borrando uno a uno, la rejilla
         // repinta entre borrado y borrado y puede pedir filas que ya no existen en la lista.
@@ -362,6 +383,7 @@ public partial class MainForm : Form
         MarcarModificado();
 
         EstablecerEstado(clientes.Count == 1 ? "Cliente eliminado." : $"{clientes.Count} clientes eliminados.");
+        return true;
     }
 
     private void grid_CellValueChanged(object sender, DataGridViewCellEventArgs e)
@@ -396,7 +418,7 @@ public partial class MainForm : Form
     /// <summary>No se puede salir de una fila con el DNI vacío o repetido: es la clave del cliente.</summary>
     private void grid_RowValidating(object sender, DataGridViewCellCancelEventArgs e)
     {
-        if (_cargando || e.RowIndex < 0 || e.RowIndex >= bindingSource.Count) return;
+        if (_cargando || _eliminando || e.RowIndex < 0 || e.RowIndex >= bindingSource.Count) return;
 
         var fila = grid.Rows[e.RowIndex];
         if (fila.IsNewRow || !(fila.DataBoundItem is Cliente cliente)) return;
