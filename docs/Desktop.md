@@ -4,7 +4,7 @@
 
 Una aplicación **Windows Forms (.NET Framework 4.8)** para **importar clientes desde ficheros CSV o JSON**, revisarlos y corregirlos en una tabla editable, y guardarlos en disco. Los datos se conservan entre sesiones: al cerrar se guardan y al abrir se cargan solos.
 
-Trabaja con los mismos clientes y las mismas reglas que la API (DNI, nombre, apellidos, fecha de nacimiento, teléfono y email), porque las dos comparten el proyecto `ImportadorDeClientes.Core`. Las reglas están detalladas en [Api.md](Api.md#reglas-de-validación-post-y-put).
+Trabaja con los mismos clientes y las mismas reglas que la API (DNI o NIE con letra de control correcta, nombre, apellidos, fecha de nacimiento, teléfono y email), porque las dos comparten el proyecto `ImportadorDeClientes.Core`. Las reglas están detalladas en [Api.md](Api.md#reglas-de-validación-post-y-put).
 
 ## 2. Qué permite hacer
 
@@ -58,7 +58,7 @@ Qué pasa con los errores:
 - **Errores visibles:**
   - cada celda con un dato no válido muestra un **icono rojo**, y al pasar el ratón por encima aparece el motivo;
   - la barra de estado cuenta cuántos clientes tienen errores.
-- **El DNI es la clave.** No puedes salir de una fila con el DNI vacío o repetido. Escríbelo, o pulsa `Esc` para descartar una fila nueva.
+- **El DNI es la clave.** No puedes salir de una fila con el DNI vacío o repetido. Escríbelo, o pulsa `Esc` para descartar una fila nueva. Un DNI o NIE con la letra incorrecta sí deja salir de la fila, pero queda marcado con el icono de error, igual que el resto de datos no válidos.
 
 ### Guardar y cargar
 

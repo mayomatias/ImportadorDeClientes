@@ -6,5 +6,5 @@ dni,nombre,apellidos,fechaNacimiento,telefono,email
 12345678Z,DNI,Repetido,1970-05-05,612345678,repetido@example.com
 22222222J,Teléfono,Corto,1991-02-02,61234,tel@example.com
 33333333P,Fecha,Formato raro,02-02-1991,612345678,fecha@example.com
-44444444A,"Comillas, con coma",Válido,15/08/1979,+34 712 345 678,comillas@example.com
+44444444A,"María José, Jr.",Navarro Gil,15/08/1979,+34 712 345 678,comillas@example.com
 55555555K,Campos,De menos

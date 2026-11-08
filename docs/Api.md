@@ -37,7 +37,7 @@ Detalles a tener en cuenta:
 
 | Campo | Regla |
 |---|---|
-| `dni` | Obligatorio. La letra no se comprueba, porque el enunciado solo pide que no esté vacío. |
+| `dni` | Obligatorio. DNI (8 dígitos + letra, `12345678Z`) o NIE (X/Y/Z + 7 dígitos + letra, `X1234567L`), con la letra de control correcta |
 | `nombre` | Obligatorio, como máximo 100 caracteres |
 | `apellidos` | Obligatorio, como máximo 150 caracteres |
 | `fechaNacimiento` | Obligatoria, no puede ser futura ni anterior a 1900 |
@@ -100,6 +100,7 @@ La API es una capa fina: recibe la petición, delega y traduce el resultado a un
 | Middleware `app.Use(...)` + `ErroresDeCuerpo(...)` | Api (`Program.cs`) | Captura la `BadHttpRequestException` que lanza ASP.NET Core cuando no puede leer el cuerpo y la convierte en el mismo *ValidationProblem*. Con `ThrowOnBadRequest = true` se comporta igual en Development que en producción. |
 | `Cliente` | Core/Modelos | Modelo de datos. Normaliza el DNI (quita espacios y lo pasa a mayúsculas). |
 | `ClienteValidator` | Core/Validacion | Aplica las reglas de la tabla anterior. Nunca lanza excepciones por datos incorrectos: devuelve un `ResultadoValidacion` con la lista de errores. |
+| `DniNieValidator` | Core/Validacion | Comprueba el formato de DNI y NIE y su letra de control: número módulo 23 en la tabla `TRWAGMYFPDXBNJZSQVHLCKE`. En el NIE, X, Y y Z valen 0, 1 y 2. |
 | `IClienteRepository` | Core/Almacenamiento | Contrato de almacenamiento: `GetAll`, `GetByDni`, `Add`, `Update`, `Delete`, `SaveAll` |
 | `JsonFileClienteRepository` | Core/Almacenamiento | Implementación sobre un fichero JSON |
 

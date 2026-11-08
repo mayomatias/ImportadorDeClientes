@@ -6,18 +6,10 @@ namespace ImportadorDeClientes.Core.Validacion;
 
 public class ClienteValidator
 {
-    private const string LetrasDni = "TRWAGMYFPDXBNJZSQVHLCKE";
     private static readonly DateTime FechaMinima = new(1900, 1, 1);
 
-    private static readonly Regex RegexDni = new(@"^\d{8}[A-Z]$", RegexOptions.Compiled);
     private static readonly Regex RegexEmail = new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
     private static readonly Regex RegexTelefono = new(@"^(\+34)?[6789]\d{8}$", RegexOptions.Compiled);
-
-    /// <summary>
-    /// Si es true, exige 8 dígitos + letra y comprueba que la letra sea correcta.
-    /// Desactivado por defecto: el enunciado solo pide que el DNI no esté vacío.
-    /// </summary>
-    public bool ComprobarLetraDni { get; set; }
 
     public ResultadoValidacion Validar(Cliente cliente)
     {
@@ -35,25 +27,11 @@ public class ClienteValidator
         return resultado;
     }
 
-    private void ValidarDni(string dni, ResultadoValidacion r)
+    /// <summary>Acepta DNI y NIE con su letra de control correcta.</summary>
+    private static void ValidarDni(string dni, ResultadoValidacion r)
     {
-        if (string.IsNullOrWhiteSpace(dni))
-        {
-            r.Agregar(nameof(Cliente.Dni), "El DNI es obligatorio.");
-            return;
-        }
-
-        if (!ComprobarLetraDni) return;
-
-        if (!RegexDni.IsMatch(dni))
-        {
-            r.Agregar(nameof(Cliente.Dni), "El DNI debe tener 8 dígitos y una letra.");
-            return;
-        }
-
-        var numero = int.Parse(dni.Substring(0, 8));
-        if (dni[8] != LetrasDni[numero % 23])
-            r.Agregar(nameof(Cliente.Dni), "La letra del DNI no es correcta.");
+        var error = DniNieValidator.Comprobar(dni);
+        if (error != null) r.Agregar(nameof(Cliente.Dni), error);
     }
 
     private static void ValidarTexto(string valor, string campo, string etiqueta, int max, ResultadoValidacion r)

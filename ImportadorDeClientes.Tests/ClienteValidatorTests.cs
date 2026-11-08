@@ -35,6 +35,30 @@ public class ClienteValidatorTests
     }
 
     [Theory]
+    [InlineData("12345678Z")]  // DNI
+    [InlineData("x1234567l")]  // NIE con X, en minúsculas: Cliente lo normaliza
+    [InlineData("Z1234567R")]  // NIE con Z (cuenta como 2)
+    public void DniONieConLetraCorrecta_EsValido(string documento)
+    {
+        var cliente = ClienteValido();
+        cliente.Dni = documento;
+
+        Assert.True(_validator.Validar(cliente).EsValido);
+    }
+
+    [Theory]
+    [InlineData("12345678A")]  // DNI con letra incorrecta
+    [InlineData("X1234567A")]  // NIE con letra incorrecta
+    [InlineData("1234567Z")]   // solo 7 dígitos
+    public void DniONieMalFormadoOConLetraIncorrecta_EsError(string documento)
+    {
+        var cliente = ClienteValido();
+        cliente.Dni = documento;
+
+        AssertErrorEn(cliente, nameof(Cliente.Dni));
+    }
+
+    [Theory]
     [InlineData("anaexample.com")]
     [InlineData("ana@example")]
     public void EmailInvalido_EsError(string email)

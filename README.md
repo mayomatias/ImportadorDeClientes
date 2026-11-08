@@ -25,7 +25,7 @@ ImportadorDeClientes.slnx           ← todo junto
 ImportadorDeClientes.Core/      netstandard2.0 · modelo, validación, importadores CSV/JSON, repositorio JSON
 ImportadorDeClientes.Desktop/   net48 · WinForms
 ImportadorDeClientes.Api/       net10.0 · Minimal API + Swagger
-ImportadorDeClientes.Tests/     net10.0 · xUnit (22 tests de reglas de negocio)
+ImportadorDeClientes.Tests/     net10.0 · xUnit (28 tests de reglas de negocio)
 ejemplos/                       ficheros CSV/JSON de prueba
 docs/                           documentación de cada aplicación
 ```
@@ -86,7 +86,7 @@ Cubren las reglas de negocio:
 
 | Campo | Regla |
 |---|---|
-| DNI | Obligatorio y único |
+| DNI / NIE | Obligatorio y único. DNI `12345678Z` o NIE `X1234567L`, con la letra de control correcta |
 | Nombre / Apellidos | Obligatorios (máx. 100 / 150 caracteres) |
 | Fecha de nacimiento | `yyyy-MM-dd` o `dd/MM/yyyy`; no futura ni anterior a 1900 |
 | Teléfono | 9 dígitos empezando por 6, 7, 8 o 9, opcionalmente con `+34` |
