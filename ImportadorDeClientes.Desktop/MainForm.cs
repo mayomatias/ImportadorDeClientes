@@ -108,7 +108,7 @@ public partial class MainForm : Form
 
         try
         {
-            _repositorio.SaveAll(_clientes);
+            _repositorio.SaveAll(ClientesReales.ToList());
             _modificado = false;
             EstablecerEstado($"Guardado a las {DateTime.Now:HH:mm:ss} en {_rutaAlmacen}");
             return true;
@@ -337,8 +337,19 @@ public partial class MainForm : Form
                 MessageBoxDefaultButton.Button2) != DialogResult.Yes)
             return;
 
+        // Se descarta la edición en curso y se sale de la fila desde la rejilla (no desde el BindingSource),
+        // para que la rejilla no se desincronice de la lista.
         grid.CancelEdit();
-        bindingSource.CancelEdit();
+        try
+        {
+            grid.CurrentCell = null;
+        }
+        catch (InvalidOperationException)
+        {
+            return; // la fila actual no supera la validación: su ErrorText explica el motivo
+        }
+        if (grid.CurrentCell != null) return;
+
         foreach (var cliente in clientes) _clientes.Remove(cliente);
 
         EstablecerEstado(clientes.Count == 1 ? "Cliente eliminado." : $"{clientes.Count} clientes eliminados.");
@@ -378,6 +389,7 @@ public partial class MainForm : Form
     {
         var fila = grid.Rows[e.RowIndex];
         if (fila.IsNewRow || !(fila.DataBoundItem is Cliente cliente)) return;
+        if (EsVacio(cliente)) return; // fila nueva sin datos: se descarta, no hay nada que validar
 
         string error = null;
         if (string.IsNullOrWhiteSpace(cliente.Dni))
@@ -437,8 +449,12 @@ public partial class MainForm : Form
         try
         {
             if (!grid.EndEdit()) return false;
-            bindingSource.EndEdit();
-            return true;
+
+            // Se sale de la fila actual igual que si el usuario pulsara fuera: la rejilla valida y confirma
+            // la fila, o descarta la fila nueva si no se ha escrito nada. Cancelar o confirmar directamente
+            // en el BindingSource deja a la rejilla desincronizada de la lista.
+            grid.CurrentCell = null;
+            return grid.CurrentCell == null;
         }
         catch (InvalidOperationException)
         {
@@ -454,6 +470,12 @@ public partial class MainForm : Form
     {
         if (_cargando) return;
 
+        if (e.ListChangedType == ListChangedType.ItemAdded && EsVacio(_clientes[e.NewIndex]))
+        {
+            ActualizarContadores(); // fila en blanco que crea la rejilla: aún no es un cambio
+            return;
+        }
+
         if (e.ListChangedType == ListChangedType.ItemAdded || e.ListChangedType == ListChangedType.ItemDeleted)
         {
             RecalcularDuplicados();
@@ -463,7 +485,7 @@ public partial class MainForm : Form
 
     private void ReemplazarLista(IEnumerable<Cliente> clientes)
     {
-        var lista = clientes.ToList();
+        var lista = clientes.Where(c => !EsVacio(c)).ToList();
         _cargando = true;
         try
         {
@@ -474,7 +496,9 @@ public partial class MainForm : Form
         finally
         {
             _clientes.RaiseListChangedEvents = true;
-            _clientes.ResetBindings();
+            // El aviso se lanza desde el BindingSource: si se lanza desde la lista, el BindingSource
+            // puede no propagarlo a la rejilla y esta se queda con las filas antiguas.
+            bindingSource.ResetBindings(false);
             _cargando = false;
         }
 
@@ -492,9 +516,17 @@ public partial class MainForm : Form
             StringComparer.OrdinalIgnoreCase);
     }
 
+    /// <summary>Clientes de la lista sin contar la fila en blanco que la rejilla crea al pulsar en la fila nueva.</summary>
+    private IEnumerable<Cliente> ClientesReales => _clientes.Where(c => !EsVacio(c));
+
+    private static bool EsVacio(Cliente c) =>
+        string.IsNullOrWhiteSpace(c.Dni) && string.IsNullOrWhiteSpace(c.Nombre) &&
+        string.IsNullOrWhiteSpace(c.Apellidos) && c.FechaNacimiento == default &&
+        string.IsNullOrWhiteSpace(c.Telefono) && string.IsNullOrWhiteSpace(c.Email);
+
     private int ContarClientesConErrores() =>
-        _clientes.Count(c => !_validator.Validar(c).EsValido ||
-                             (c.Dni != null && _dnisDuplicados.Contains(c.Dni)));
+        ClientesReales.Count(c => !_validator.Validar(c).EsValido ||
+                                  (c.Dni != null && _dnisDuplicados.Contains(c.Dni)));
 
     private void MarcarModificado()
     {
@@ -505,7 +537,7 @@ public partial class MainForm : Form
     private void ActualizarContadores()
     {
         var conErrores = ContarClientesConErrores();
-        lblTotal.Text = $"{_clientes.Count} clientes" + (conErrores > 0 ? $" · {conErrores} con errores" : string.Empty);
+        lblTotal.Text = $"{ClientesReales.Count()} clientes" + (conErrores > 0 ? $" · {conErrores} con errores" : string.Empty);
         Text = _modificado ? $"{TituloBase} *" : TituloBase;
     }
 
